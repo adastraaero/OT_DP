@@ -1,0 +1,95 @@
+Media Wiki prerequsites:
+https://www.mediawiki.org/wiki/Download
+MediaWiki is not compatible with PHP 7.3.0 - 7.3.18 and 7.4.0 - 7.4.2 due to an upstream bug. Use PHP 7.3.19+ or 7.4.3+ instead. See task T246594 for more information.
+MediaWiki requires PHP 7.3.19/7.4.3+ and either MySQL 5.5.8+, MariaDB, SQLite or PostgreSQL. For more information, please read the pages on system requirements and compatibility.
+
+
+
+installing apache:
+yum install httpd
+systemctl start httpd
+systemctl enable httpd
+systemctl status httpd
+
+
+
+installing mysql:
+wget https://dev.mysql.com/get/mysql80-community-release-el7-3.noarch.rpm
+rpm -Uvh mysql80-community-release-el7-3.noarch.rpm
+yum install -y mysql-server
+systemctl start mysqld
+systemctl  enable mysqld
+systemctl status mysqld
+
+grep 'password' /var/log/mysqld.log
+mysql_secure_installation
+
+mysql -u root -pOtus321$
+ALTER USER 'root'@'localhost' IDENTIFIED WITH caching_sha2_password BY '*******' 'Otus321$'          
+
+
+CREATE DATABASE my_wiki;
+GRANT INDEX, CREATE, SELECT, INSERT, UPDATE, DELETE, ALTER, LOCK TABLES ON my_wiki.* TO 'root'@'localhost';
+FLUSH PRIVILEGES;
+
+
+PHP 7.4 installation:
+yum -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+yum -y install https://rpms.remirepo.net/enterprise/remi-release-7.rpm
+update
+
+yum-config-manager --enable remi-php74
+yum update
+yum install php php-cli
+yum install php-xml
+yum install -y php-intl
+yum install -y php-gd
+yum install -y texlive
+yum install -y php-mysql
+yum install -y php-mbstring.x86_64
+php -v
+
+
+MediaWiki installation:
+curl -O https://releases.wikimedia.org/mediawiki/1.36/mediawiki-1.36.2.tar.gz
+tar xvzf mediawiki-*.tar.gz
+mv mediawiki-1.36.2/* /var/www/html/
+
+Go to  http://your_server_ip and finish configuring
+
+
+Download and copy  /var/www/html/LocalSettings.php to /var/www/html
+
+
+
+
+
+
+
+
+
+
+Настройка Master сервера БД:
+ (172.17.30.3 - BackendSRV)
+vim /etc/my.cnf
+
+
+[mysqld]
+server_id = 1
+bind-address = 172.17.30.3
+
+Настраиваем пользователя для репликации:
+mysql -p
+create user repl@'%' IDENTIFIED WITH caching_sha2_password BY 'oTUSlave#2020';
+GRANT REPLICATION SLAVE ON *.* TO repl@'%';
+FLUSH PRIVILEGES;
+SHOW MASTER STATUS; - смотрим бинлог и позицию в нём
+
+systemctl restart mysqld
+
+
+делаем бекап базы для переноса
+sqldump my_wiki -u root -p > my_wiki.sql
+
+Копируем БД на слейв
+scp my_wiki.sql root@172.17.30.5:/root/

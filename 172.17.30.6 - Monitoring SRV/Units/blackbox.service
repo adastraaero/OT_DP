@@ -1,0 +1,15 @@
+[Unit]
+Description=Blackbox
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+User=blackbox_exporter
+Group=blackbox_exporter
+Restart=on-failure
+
+ExecStart=/usr/local/bin/blackbox_exporter/blackbox_exporter --config.file=/usr/local/bin/blackbox_exporter/monitor_website.yml
+
+
+[Install]
+WantedBy=multi-user.target

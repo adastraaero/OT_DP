@@ -1,0 +1,214 @@
+создаём директории для хранения файлов prometheus:
+mkdir /etc/prometheus /var/lib/prometheus ~/prometheus (папка для скачки prometheus
+chown prometheus:prometheus /etc/prometheus /var/lib/prometheus
+ls -ld /etc/prometheus /var/lib/prometheus - проверяем права
+yum install -y wget
+wget https://github.com/prometheus/prometheus/releases/download/v2.31.1/prometheus-2.31.1.linux-amd64.tar.gz
+wget https://github.com/prometheus/node_exporter/releases/download/v1.3.0/node_exporter-1.3.0.linux-amd64.tar.gz
+
+
+
+cp node_exporter -1.1/node_exporter /user/local/bin 
+cp prometheus/prometheus /usr/local/bin
+cp prometheus/promtool /usr/local/bin
+mkdir /usr/local/bin/blackbox_exporter/
+
+chown prometheus:prometheus /usr/local/bin/prometheus
+chown prometheus:prometheus /usr/local/bin/promtool
+chown node_exporter:node_exporter: /usr/local/bin/node_exporter
+chown blackbox_exporter:blackbox_exporter /usr/local/bin/blackbox_exporter
+
+
+создаём модуль для systemd который описывает работу node_exporter
+vim /etc/systemd/system/node_exporter.service
+
+[Unit]
+
+Description=Node Exporter
+
+Wants=network-online.target
+
+After=network-online.target
+
+
+
+[Service]
+
+User=node_exporter
+
+Group=node_exporter
+
+Type=simple
+
+ExecStart=/usr/local/bin/node_exporter
+
+
+
+[Install]
+
+WantedBy=multi-user.target
+
+
+chown -Rv prometheus:prometheus /etc/prometheus
+
+
+
+создаём модуль для systemd который описывает работу prometheus
+vim /etc/systemd/system/prometheus.service
+
+[Unit]
+
+Description=Prometheus Monitoring
+
+Wants=network-online.target
+
+After=network-online.target
+
+
+
+[Service]
+
+User=prometheus
+
+Group=prometheus
+
+Type=simple
+
+ExecStart=/usr/local/bin/prometheus \
+
+--config.file /etc/prometheus/prometheus.yml \
+
+--storage.tsdb.path /var/lib/prometheus/ \
+
+--web.console.templates=/etc/prometheus/consoles \
+
+--web.console.libraries=/etc/prometheus/console_libraries
+
+ExecReload=/bin/kill -HUP $MAINPID
+
+
+
+[Install]
+
+WantedBy=multi-user.target
+
+
+
+cd /home/mity/Downloads/prometheus-2.31.1.linux-amd64
+cp -rvi {console{_libraries,s},prometheus.yml} /etc/prometheus/
+chown -Rv prometheus:prometheus /etc/prometheus - рекурсивно меняем права
+
+sudo -u prometheus /usr/local/bin/prometheus --config.file /etc/prometheus/prometheus.yml --storage.tsdb.path /var/lib/prometheus --web.console.templates=/etc/prometheus/consoles --web.console.libraries=/etc/prometheus/console_libraries - проверяем запуск
+
+порт 9090
+http://172.17.30.6:9090 - проверяем через браузер
+
+
+
+
+Добавляем конфиг для node_exporter и blackbox
+
+vim prometheus.yml
+
+
+
+# my global config
+global:
+  scrape_interval: 15s # Set the scrape interval to every 15 seconds. Default is every 1 minute.
+  evaluation_interval: 15s # Evaluate rules every 15 seconds. The default is every 1 minute.
+  # scrape_timeout is set to the global default (10s).
+
+
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          # - alertmanager:9093
+
+
+# Load rules once and periodically evaluate them according to the global 'evaluation_interval'.
+rule_files:
+  # - "first_rules.yml"
+  # - "second_rules.yml"
+
+
+# A scrape configuration containing exactly one endpoint to scrape:
+# Here it's Prometheus itself.
+scrape_configs:
+  # The job name is added as a label `job=<job_name>` to any timeseries scraped from this config.
+  - job_name: "prometheus"
+
+
+    # metrics_path defaults to '/metrics'
+    # scheme defaults to 'http'.
+
+
+    static_configs:
+      - targets: ["localhost:9090"]
+  - job_name: "node_exporter"
+    scrape_interval: 5s
+    static_configs:
+    - targets: ['localhost:9100']
+  - job_name: 'blackbox'
+    metrics_path: /probe
+    params:
+      module: [http_2xx_example]  # Look for a HTTP 200 response.
+    static_configs:
+      - targets:
+        - http://172.17.30.3:80
+        - http://172.17.30.9:80
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: 127.0.0.1:9115  # The blackbox exporter's real hostname:port.
+
+
+Устанавливаем BlackBoxexpoerter для мониторинга доступности веб-серверов бекенда
+wget https://github.com/prometheus/blackbox_exporter/releases/download/v0.19.0/blackbox_exporter-0.19.0.linux-amd64.tar.gz
+
+создаём модуль для systemd который описывает работу blackbox
+vim /etc/systemd/system/blackbox.service
+
+[Unit]
+Description=Blackbox
+Wants=network-online.target
+After=network-online.target
+
+
+[Service]
+User=blackbox_exporter
+Group=blackbox_exporter
+Restart=on-failure
+
+
+ExecStart=/usr/local/bin/blackbox_exporter/blackbox_exporter --config.file=/usr/local/bin/blackbox_exporter/monitor_website.yml
+
+
+
+
+[Install]
+WantedBy=multi-user.target
+
+
+
+
+
+Проверяем.запускаем.добавляем в автозагрузку
+
+systemctl start/enable/status prometheus.service
+systemctl start/enable/status node_exporter.service
+systemctl start/enable/status blackbox_exporter.service
+
+Устанавливаем Графану
+wget https://dl.grafana.com/enterprise/release/grafana-enterprise-8.2.5-1.x86_64.rpm
+yum install grafana-enterprise-8.2.5-1.x86_64.rpm
+
+systemctl start/enable/status grafana-server.service
+запускаем настройка графаны через браузер http://172.17.30.6:3000/login  admin/admin(changed)
+Configuration-Data Sources
+
+Create -import - добавляем дашборд по номеру

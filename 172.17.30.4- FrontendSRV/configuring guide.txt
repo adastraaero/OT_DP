@@ -1,0 +1,32 @@
+Настройка сервера 2(172.17.30.4- FrontendSRV):
+install/start/enable nginx
+
+vim /etc/nginx/conf.d/upstream.conf
+
+                                                                                                                                                                                                                                                        
+upstream httpd {
+        server 172.17.30.3:80;
+        server 172.17.30.9:80;
+}
+
+vim /etc/ngix/nginx.conf  -добавление директивы location  (proxypass - перенаправление запроса далее)
+
+
+
+
+    server {
+        listen       80;
+        listen       [::]:80;
+        server_name  _;
+        root         /usr/share/nginx/html;
+
+
+        # Load configuration files for the default server block.
+        include /etc/nginx/default.d/*.conf;
+
+
+        location / {
+                proxy_pass http://httpd;
+        }
+
+systemctl reload nginx.service 

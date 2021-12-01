@@ -1,0 +1,40 @@
+Настройка SQL SECONDARY SERVER (172.17.30.5 - SQLSecondary)
+mysql -p
+
+CREATE DATABASE my_wiki;
+CREATE USER 'slave'@'localhost' IDENTIFIED BY 'Otus321$';
+GRANT ALL PRIVILEGES ON my_wiki.* TO 'slave'@'localhost' WITH GRANT OPTION;
+FLUSH PRIVILEGES;
+
+vim /etc/my.cnf
+
+STOP SLAVE;
+CHANGE MASTER TO MASTER_HOST='172.17.30.3', MASTER_USER='repl', MASTER_PASSWORD='oTUSlave#2020', MASTER_LOG_FILE='binlog.000006', MASTER_LOG_POS=156, GET_MASTER_PUBLIC_KEY = 1;
+START SLAVE;
+show slave status\G -провер€ем репликацию
+
+
+vim /home/mity/Documents/.my.cnf - создаём файл с учётными данными для sql.
+
+
+Делаем простой бекап через скрипт с добавление в cron.
+#!/bin/bash
+mysqldump --defaults-extra-file=/home/mity/Documents/.my.cnf my_wiki > /home/mity/Documents/Backup/mydata_$( date +"%Y_%m_%d_%H_%M" ).sql
+
+crontab -e (смотри скриншот)
+
+
+
+
+
+
+
+
+
+Запускаем бекап
+yum install -y pigz
+
+/home/mity/Documents/syncbinlog.sh  --mysql-conf=/home/mity/Documents/.my.cnf --backup-dir=/home/mity/Documents/BackupBin --compress --rotate=30
+
+
+
