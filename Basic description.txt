@@ -1,0 +1,39 @@
+
+Описание вирт. машин и их ролей
+используемая ОС: 
+CentOS Linux release 7.9.2009 (Core)
+
+SELINUX и firewalld выключены
+
+	* 
+1 сервер бекенд с вики, апачем и MYSQL  (172.17.30.3 - BackendSRV)
+
+		* 
+MYSQL не MariaDB
+		* 
+PHP 7.2
+		* 
+mediaWiki
+	* 
+2 фронтэнд с nginx и балансировкой (172.17.30.4- FrontendSRV)
+
+		* 
+NGINX
+	* 
+3 Слейв сервер SQL(172.17.30.5 - SQLSecondary)
+
+		* 
+MYSQL
+	* 
+4 мониторинг и то куда бекап складывать
+	* 
+5 (172.17.30.9 backend2 ) второй сервер backend для проверки работы балансировки
+
+		* 
+MYSQL не MariaDB
+		* 
+PHP 7.2
+		* 
+mediaWiki
+
+
