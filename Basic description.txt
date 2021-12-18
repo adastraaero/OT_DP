@@ -11,7 +11,7 @@ SELINUX и firewalld выключены
 		* 
 MYSQL не MariaDB
 		* 
-PHP 7.2
+PHP 7.4
 		* 
 mediaWiki
 	* 
@@ -32,7 +32,7 @@ MYSQL
 		* 
 MYSQL не MariaDB
 		* 
-PHP 7.2
+PHP 7.4
 		* 
 mediaWiki
 
