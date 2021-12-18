@@ -93,3 +93,20 @@ sqldump my_wiki -u root -p > my_wiki.sql
 
 Копируем БД на слейв
 scp my_wiki.sql root@172.17.30.5:/root/
+
+
+
+
+Настройка бинлог бекап
+
+SQL backup
+mysqldump --defaults-extra-file=/home/mity/Documents/.my.cnf my_wiki > /home/mity/Documents/Backup/mydata_$( date +"%Y_%m_%d_%H_%M" ).sql
+
+yum install -y pigz
+
+/home/mity/Documents/syncbinlog.sh  --mysql-conf=/home/mity/Documents/.my.cnf --backup-dir=/home/mity/Documents/BackupBin --compress --rotate=30
+
+Скрипт для бинлога
+https://github.com/ardabeyazoglu/mysql-binlog-backup
+
+
