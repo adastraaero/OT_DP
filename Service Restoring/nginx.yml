@@ -1,0 +1,17 @@
+---
+- hosts: frontendsrv.example.com
+  user: ansible
+  become: yes
+  become_method: sudo
+  become_user: root
+  tasks:
+  - name: copy upstream
+    copy: src=/home/ansible/OTUS_DP2/upstream.conf dest=/etc/nginx/conf.d/
+  - name: install nginx
+    yum: name=nginx state=latest
+  - name: start nginx
+    service: name=nginx state=started  
+  - name: copy updated config nginx
+    copy: src=/home/ansible/OTUS_DP2/nginx.conf dest=/etc/nginx/
+  - name: restart nginx
+    service: name=nginx state=restarted  

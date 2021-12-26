@@ -1,0 +1,9 @@
+---
+- hosts: "backendservers"
+  user: ansible
+  become: yes
+  become_method: sudo
+  become_user: root
+  tasks:
+  - name: install php
+    script: /home/ansible/OTUS_DP2/php_script.sh

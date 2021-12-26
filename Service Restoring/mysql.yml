@@ -1,0 +1,17 @@
+---
+- hosts: "backendservers"
+  user: ansible
+  become: yes
+  become_method: sudo
+  become_user: root
+  tasks:
+  - name: copy rpm to hosts
+    copy: src=/home/ansible/OTUS_DP2/mysql80-community-release-el7-3.noarch.rpm dest=/tmp/mysql.rpm
+  - name: Install mysql
+    yum: name=/tmp/mysql.rpm state=present  
+  - name: install2
+    yum: name=mysql-server state=installed  
+  - name: start mysql
+    service: name=mysqld enabled=yes state=started
+  - name: restart mysql
+    service: name=mysqld state=restarted  

@@ -1,0 +1,12 @@
+---
+- hosts: all 
+  gather_facts: False
+  user: ansible
+  become: yes
+  become_method: sudo
+  become_user: root
+  tasks:
+  - name: disable selinux 
+    selinux: state=disabled
+  - name: reboot hosts
+    reboot: reboot_timeout=60

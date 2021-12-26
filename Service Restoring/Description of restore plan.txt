@@ -1,0 +1,31 @@
+Хосты на которых проводится демонстрация восстановления используют Centos 2.9.
+Даннная работа демонстрирует восстановление работоспособности сервиса mediawiki
+с помощью восстановления с нуля серверов backendsrv backendsrv.example.com/backendsrv2 backendsrv2.example.com/frontendsrv frontendsrv.example.com 
+с использованием резервной копии БД mysql. Для всех задач, кроме установки mediawiki, настройки mysql и демонстрации самого восстановления бд mysql с резервной копии используются плейбуки (ansible версии 2.9.).
+На каждом хосте добавлен посльзователь ansible и отредактирован файл /etc/hosts т.к. в данной демонстрации не используется DNS сервер.
+C контрольной ноды скопированы ssh ключи на все хосты:
+
+su - ansible
+ssh-keygen
+ssh-copy-id backendsrv.example.com && ssh-copy-id backendsrv.example.com
+
+Описание /etc/hotst
+172.17.30.8 control control.example.com
+172.17.30.12 backendsrv backendsrv.example.com
+172.17.30.13 backendsrv2 backendsrv2.example.com
+172.17.30.14 frontendsrv frontendsrv.example.com
+172.17.30.15 mysqlslave mysqlslave.example.com
+172.17.30.16 monitoring monitoring.example.com
+
+
+Описание плейбуков:
+selinux.yml - отключает selinux и перезагружает хосты.
+remi_epel.yml - добавляет в репозитории необходимые для загрузки php 7.4
+update.yml - выполняет обновление всех систем и выключает firewalld
+mysql.yml - выполняет установку mysql из заранее подготовленного rpm пакета и производит запуск службы
+без последующей настройки
+php.yml  - проводит установку php 7.4 и необходимых для работы mediawiki пакетов
+nginx.yml - проводит установку и запуск nginx  c  предварительной настройкой nginx.conf и upstream.conf
+
+
+
